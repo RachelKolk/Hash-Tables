@@ -136,6 +136,16 @@ char *hash_table_retrieve(BasicHashTable *ht, char *key)
 {
   // hash our key to get the index
   int index = hash(key, ht->capacity);
+
+  // check if there's a valid element in our bucket
+  // if yes, compare the keys
+  if (ht->storage[index] != NULL && strcmp(ht->storage[index]->key, key) == 0) {
+    // if they do match, return the value
+    return ht->storage[index]->value;
+  } 
+  // otherwise we print an error
+  fprintf(stderr, "Unable to find that entry.");
+  
   return NULL;
 }
 
