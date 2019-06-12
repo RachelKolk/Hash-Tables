@@ -73,7 +73,10 @@ unsigned int hash(char *str, int max)
  */
 HashTable *create_hash_table(int capacity)
 {
-  HashTable *ht;
+  HashTable *ht = malloc(sizeof(HashTable));
+
+  ht->storage = calloc(capacity, sizeof(LinkedPair *));
+  ht->capacity = capacity;
 
   return ht;
 }
@@ -149,21 +152,21 @@ int main(void)
 {
   struct HashTable *ht = create_hash_table(2);
 
-  hash_table_insert(ht, "line_1", "Tiny hash table\n");
-  hash_table_insert(ht, "line_2", "Filled beyond capacity\n");
-  hash_table_insert(ht, "line_3", "Linked list saves the day!\n");
+  // hash_table_insert(ht, "line_1", "Tiny hash table\n");
+  // hash_table_insert(ht, "line_2", "Filled beyond capacity\n");
+  // hash_table_insert(ht, "line_3", "Linked list saves the day!\n");
 
-  printf("%s", hash_table_retrieve(ht, "line_1"));
-  printf("%s", hash_table_retrieve(ht, "line_2"));
-  printf("%s", hash_table_retrieve(ht, "line_3"));
+  // printf("%s", hash_table_retrieve(ht, "line_1"));
+  // printf("%s", hash_table_retrieve(ht, "line_2"));
+  // printf("%s", hash_table_retrieve(ht, "line_3"));
 
-  int old_capacity = ht->capacity;
-  ht = hash_table_resize(ht);
-  int new_capacity = ht->capacity;
+  // int old_capacity = ht->capacity;
+  // ht = hash_table_resize(ht);
+  // int new_capacity = ht->capacity;
 
-  printf("\nResizing hash table from %d to %d.\n", old_capacity, new_capacity);
+  // printf("\nResizing hash table from %d to %d.\n", old_capacity, new_capacity);
 
-  destroy_hash_table(ht);
+  // destroy_hash_table(ht);
 
   return 0;
 }
