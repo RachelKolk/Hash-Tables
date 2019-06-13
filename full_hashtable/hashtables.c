@@ -144,7 +144,25 @@ void hash_table_insert(HashTable *ht, char *key, char *value)
  */
 void hash_table_remove(HashTable *ht, char *key)
 {
-
+  // hash our key to get the index
+  int index = hash(key, ht->capacity);
+  // set the pointer to the stored_pair to be the storage index
+  LinkedPair *stored_pair = ht->storage[index];
+  // see if there is an existing element in the bucket index
+  //if yes, see if the keys match
+  if (ht->storage[index] != NULL && strcmp(ht->storage[index]->key, key) == 0) {
+    // use a reference so we can still delete correctly after reassigning new value
+    LinkedPair *pair_to_remove = stored_pair;
+    // reassign the next pointer
+    stored_pair = stored_pair->next;
+    // remove the old pair
+    destroy(pair_to_remove);
+    // set the removed storage to NULL
+    ht->storage[index] = NULL;
+  } else {
+      // otherwise we print an error
+      fprintf(stderr, "Unable to remove that entry");
+  }
 }
 
 /*
