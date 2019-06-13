@@ -73,7 +73,7 @@ unsigned int hash(char *str, int max)
  */
 HashTable *create_hash_table(int capacity)
 {
-  HashTable *ht = malloc(sizeof(HashTable));
+  HashTable *ht = malloc(capacity * sizeof(HashTable));
 
   ht->storage = calloc(capacity, sizeof(LinkedPair *));
   ht->capacity = capacity;
@@ -92,7 +92,46 @@ HashTable *create_hash_table(int capacity)
  */
 void hash_table_insert(HashTable *ht, char *key, char *value)
 {
-
+  // hash our key to get the index
+  int index = hash(key, ht->capacity);
+  // create a new LinkedPair
+  LinkedPair *new_pair = create_pair(key, value);
+  // set the pointer for the stored_pair
+  LinkedPair *stored_pair = ht->storage[index];
+  // check to see if the bucket is full
+  if (stored_pair != NULL) {
+    // check to see if the key is different than the existing key
+    if (strcmp(key, stored_pair->key) != 0) {
+      // if so check to see if we are at the tail
+      if (stored_pair->next == NULL) {
+        // if so set the new_pair to be next
+        stored_pair->next = new_pair;
+      }
+      // otherwise we traverse the LinkedList to find the tail
+      else {
+        for (int i = 0; i < ht->capacity; i++) {
+          // when we find it
+          if (ht->storage[i]->next == NULL) {
+            // we set its next to the new_pair
+            ht->storage[i]->next = new_pair;
+          }
+        }
+      }
+    }
+    // if the key is the same we print a warning
+    else {
+      fprintf(stderr, "You are overwriting the current value.");
+      // destroy the current pair
+      destroy_pair(stored_pair);
+      // and set the new_pair as the stored_pair
+      ht->storage[index] = new_pair;
+    }
+  }
+  // if the bucket is empty
+  else {
+    // we simply set the new pair
+    ht->storage[index] = new_pair;
+  }
 }
 
 /*
