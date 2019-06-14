@@ -106,6 +106,7 @@ void hash_table_insert(HashTable *ht, char *key, char *value)
       if (stored_pair->next == NULL) {
         // if so set the new_pair to be next
         stored_pair->next = new_pair;
+        new_pair->next = NULL;
       }
       // otherwise we traverse the LinkedList to find the tail
       else {
@@ -114,6 +115,7 @@ void hash_table_insert(HashTable *ht, char *key, char *value)
           if (ht->storage[i]->next == NULL) {
             // we set its next to the new_pair
             ht->storage[i]->next = new_pair;
+            new_pair->next = NULL;
           }
         }
       }
@@ -166,7 +168,7 @@ void hash_table_remove(HashTable *ht, char *key)
     while (stored_pair && !found) {
       if (ht->storage[index] != NULL && strcmp(ht->storage[index]->key, key) == 0) {
         found = 1;
-        LinkedPair *previous = NULL;
+        
         // use a reference so we can still delete correctly after reassigning new value
         LinkedPair *pair_to_remove = stored_pair;
         // reassign the next pointer
@@ -203,18 +205,18 @@ char *hash_table_retrieve(HashTable *ht, char *key)
   LinkedPair *stored_pair = ht->storage[index];
   // check if there's a valid element in our bucket
   // if yes, compare the keys
-  if (ht->storage[index] != NULL && strcmp(ht->storage[index]->key, key) == 0) {
+  if (stored_pair != NULL && strcmp(stored_pair->key, key) == 0) {
     // if they match, return the value
-    return ht->storage[index]->value;
+    return stored_pair->value;
   }
   // otherwise we traverse the LinkedList to find the key
   else {
     while (stored_pair) {
       // check if there's a valid element in our bucket
       // if yes, compare the keys
-      if (ht->storage[index] != NULL && strcmp(ht->storage[index]->key, key) == 0) {
+      if (stored_pair != NULL && strcmp(stored_pair->key, key) == 0) {
         // if they match, return the value
-        return ht->storage[index]->value;
+        return stored_pair->value;
       }
       // otherwise we move the stored_pair value to the next pair in the linkeList
       stored_pair = stored_pair->next;
@@ -233,8 +235,8 @@ char *hash_table_retrieve(HashTable *ht, char *key)
 void destroy_hash_table(HashTable *ht)
 {
  
-  while (ht->storage) {
-    for (int i = 0; i < ht->capacity; i++) {
+
+  for (int i = 0; i < ht->capacity; i++) {
     if (ht->storage[i] != NULL) {
       // use a reference so we can still delete correctly after reassigning new value
         LinkedPair *pair_to_remove = ht->storage[i];
@@ -242,12 +244,12 @@ void destroy_hash_table(HashTable *ht)
         // LinkedPair* stored_pair = ht->storage[i]->next;
         // remove the old pair
         destroy_pair(pair_to_remove);
-    }
   }
+
   free(ht->storage);
-  free(ht);
+
   }
-  
+  free(ht);  
 }
 
 
@@ -261,12 +263,18 @@ void destroy_hash_table(HashTable *ht)
  */
 HashTable *hash_table_resize(HashTable *ht)
 {
+  
   HashTable *new_ht = create_hash_table(2 * ht->capacity);
-
-  for (int i = 0; i < ht->capacity; i++) {
-    if (ht->storage[i] != NULL) {
-      memcpy(new_ht, ht->storage, ht->capacity * sizeof(ht->storage[0]));
-    }
+  printf("New Capacity %d", new_ht->capacity);
+  int i = 0;
+  while (ht->storage[i] != NULL) {
+   
+    LinkedPair *stored_pair = ht->storage[i];
+    printf("\nInserting %s - %s", stored_pair->key, stored_pair->value);
+    hash_table_insert(new_ht, stored_pair->key, stored_pair->value);
+  
+    i++;
+   // }
   }
   free(ht->storage);
   free(ht);
@@ -288,13 +296,13 @@ int main(void)
   printf("%s", hash_table_retrieve(ht, "line_2"));
   printf("%s", hash_table_retrieve(ht, "line_3"));
 
-  // int old_capacity = ht->capacity;
-  // ht = hash_table_resize(ht);
-  // int new_capacity = ht->capacity;
+  int old_capacity = ht->capacity;
+  ht = hash_table_resize(ht);
+  int new_capacity = ht->capacity;
 
-  // printf("\nResizing hash table from %d to %d.\n", old_capacity, new_capacity);
+  printf("\nResizing hash table from %d to %d.\n", old_capacity, new_capacity);
 
-  // destroy_hash_table(ht);
+  destroy_hash_table(ht);
 
   return 0;
 }
