@@ -70,7 +70,10 @@ unsigned int hash(char *str, int max)
  ****/
 BasicHashTable *create_hash_table(int capacity)
 {
-  BasicHashTable *ht;
+  BasicHashTable *ht = malloc(sizeof(BasicHashTable));
+
+  ht->capacity = capacity;
+  ht->storage = calloc(capacity, sizeof(Pair *));
 
   return ht;
 }
@@ -84,7 +87,22 @@ BasicHashTable *create_hash_table(int capacity)
  ****/
 void hash_table_insert(BasicHashTable *ht, char *key, char *value)
 {
+  // hash our key to get the index
+  int index = hash(key, ht->capacity);
+  // create a pair
+  Pair *pair = create_pair(key, value);
 
+  // set the pointer to the stored_pair to be the storage index
+  Pair *stored_pair = ht->storage[index];
+  if (stored_pair != NULL) {
+    // if the keys are the same print a warning
+    if (strcmp(key, stored_pair->key) != 0) {
+      printf("Warning: You are overwriting a value with a different key.");
+    }
+    destroy_pair(stored_pair);
+  }
+  // otherwise you set the pair at the storage index
+  ht->storage[index] = pair;
 }
 
 /****
@@ -94,7 +112,19 @@ void hash_table_insert(BasicHashTable *ht, char *key, char *value)
  ****/
 void hash_table_remove(BasicHashTable *ht, char *key)
 {
-
+  // hash our key to get an index
+  int index = hash(key, ht->capacity);
+  // see if there is an existing element in the bucket index
+  // if yes, see if the keys match
+  if (ht->storage[index] != NULL && strcmp(ht->storage[index]->key, key) == 0) {
+    // if they match remove the pair
+    destroy_pair(ht->storage[index]);
+    // set the storage equal to NULL because this is a hash table
+    ht->storage[index] = NULL;
+  } else {
+      // otherwise we print an error
+      fprintf(stderr, "Unable to remove that entry");
+  }  
 }
 
 /****
@@ -104,6 +134,18 @@ void hash_table_remove(BasicHashTable *ht, char *key)
  ****/
 char *hash_table_retrieve(BasicHashTable *ht, char *key)
 {
+  // hash our key to get the index
+  int index = hash(key, ht->capacity);
+
+  // check if there's a valid element in our bucket
+  // if yes, compare the keys
+  if (ht->storage[index] != NULL && strcmp(ht->storage[index]->key, key) == 0) {
+    // if they do match, return the value
+    return ht->storage[index]->value;
+  } 
+  // otherwise we print an error
+  fprintf(stderr, "Unable to find that entry.");
+  
   return NULL;
 }
 
@@ -114,7 +156,13 @@ char *hash_table_retrieve(BasicHashTable *ht, char *key)
  ****/
 void destroy_hash_table(BasicHashTable *ht)
 {
-
+  for (int i = 0; i < ht->capacity; i++) {
+    if (ht->storage[i] != NULL) {
+      destroy_pair(ht->storage[i]);
+    }
+  }
+  free(ht->storage);
+  free(ht);
 }
 
 

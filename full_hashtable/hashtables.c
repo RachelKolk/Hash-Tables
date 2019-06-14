@@ -73,7 +73,10 @@ unsigned int hash(char *str, int max)
  */
 HashTable *create_hash_table(int capacity)
 {
-  HashTable *ht;
+  HashTable *ht = malloc(capacity * sizeof(HashTable));
+
+  ht->storage = calloc(capacity, sizeof(LinkedPair *));
+  ht->capacity = capacity;
 
   return ht;
 }
@@ -89,7 +92,48 @@ HashTable *create_hash_table(int capacity)
  */
 void hash_table_insert(HashTable *ht, char *key, char *value)
 {
-
+  // hash our key to get the index
+  int index = hash(key, ht->capacity);
+  // create a new LinkedPair
+  LinkedPair *new_pair = create_pair(key, value);
+  // set the pointer for the stored_pair
+  LinkedPair *stored_pair = ht->storage[index];
+  // check to see if the bucket is full
+  if (stored_pair != NULL) {
+    // check to see if the key is different than the existing key
+    if (strcmp(key, stored_pair->key) != 0) {
+      // if so check to see if we are at the tail
+      if (stored_pair->next == NULL) {
+        // if so set the new_pair to be next
+        stored_pair->next = new_pair;
+        new_pair->next = NULL;
+      }
+      // otherwise we traverse the LinkedList to find the tail
+      else {
+        for (int i = 0; i < ht->capacity; i++) {
+          // when we find it
+          if (ht->storage[i]->next == NULL) {
+            // we set its next to the new_pair
+            ht->storage[i]->next = new_pair;
+            new_pair->next = NULL;
+          }
+        }
+      }
+    }
+    // if the key is the same we print a warning
+    else {
+      fprintf(stderr, "You are overwriting the current value.");
+      // destroy the current pair
+      destroy_pair(stored_pair);
+      // and set the new_pair as the stored_pair
+      ht->storage[index] = new_pair;
+    }
+  }
+  // if the bucket is empty
+  else {
+    // we simply set the new pair
+    ht->storage[index] = new_pair;
+  }
 }
 
 /*
@@ -102,7 +146,47 @@ void hash_table_insert(HashTable *ht, char *key, char *value)
  */
 void hash_table_remove(HashTable *ht, char *key)
 {
-
+  // hash our key to get the index
+  int index = hash(key, ht->capacity);
+  // set the pointer to the stored_pair to be the storage index
+  LinkedPair *stored_pair = ht->storage[index];
+  // setting a boolean to toggle whether the key has been located or not
+  int found = 0;
+  // see if there is an existing element in the bucket index
+  //if yes, see if the keys match
+  if (ht->storage[index] != NULL && strcmp(ht->storage[index]->key, key) == 0) {
+    // use a reference so we can still delete correctly after reassigning new value
+    LinkedPair *pair_to_remove = stored_pair;
+    // reassign the next pointer
+    stored_pair = stored_pair->next;
+    // remove the old pair
+    destroy_pair(pair_to_remove);
+    // set the removed storage to NULL
+    ht->storage[index] = NULL;
+  }
+  else {
+    while (stored_pair && !found) {
+      if (ht->storage[index] != NULL && strcmp(ht->storage[index]->key, key) == 0) {
+        found = 1;
+        
+        // use a reference so we can still delete correctly after reassigning new value
+        LinkedPair *pair_to_remove = stored_pair;
+        // reassign the next pointer
+        stored_pair = stored_pair->next;
+        // remove the old pair
+        destroy_pair(pair_to_remove);
+        // set the removed storage to NULL
+        ht->storage[index] = NULL;
+      } else {
+          // previous = stored_pair;
+          stored_pair = stored_pair->next;
+      }
+    
+    }
+  } 
+ 
+  // otherwise we print an error
+  fprintf(stderr, "Unable to remove that entry");
 }
 
 /*
@@ -115,6 +199,31 @@ void hash_table_remove(HashTable *ht, char *key)
  */
 char *hash_table_retrieve(HashTable *ht, char *key)
 {
+  // hash our key to get the index
+  int index = hash(key, ht->capacity);
+  // set the pointer to the stored_pair to be the storage index
+  LinkedPair *stored_pair = ht->storage[index];
+  // check if there's a valid element in our bucket
+  // if yes, compare the keys
+  if (stored_pair != NULL && strcmp(stored_pair->key, key) == 0) {
+    // if they match, return the value
+    return stored_pair->value;
+  }
+  // otherwise we traverse the LinkedList to find the key
+  else {
+    while (stored_pair) {
+      // check if there's a valid element in our bucket
+      // if yes, compare the keys
+      if (stored_pair != NULL && strcmp(stored_pair->key, key) == 0) {
+        // if they match, return the value
+        return stored_pair->value;
+      }
+      // otherwise we move the stored_pair value to the next pair in the linkeList
+      stored_pair = stored_pair->next;
+    }
+  }
+  //otherwise we print an error
+  fprintf(stderr, "Unable to find that entry.");
   return NULL;
 }
 
@@ -125,8 +234,24 @@ char *hash_table_retrieve(HashTable *ht, char *key)
  */
 void destroy_hash_table(HashTable *ht)
 {
+ 
 
+  for (int i = 0; i < ht->capacity; i++) {
+    if (ht->storage[i] != NULL) {
+      // use a reference so we can still delete correctly after reassigning new value
+        LinkedPair *pair_to_remove = ht->storage[i];
+        // reassign the next pointer
+        // LinkedPair* stored_pair = ht->storage[i]->next;
+        // remove the old pair
+        destroy_pair(pair_to_remove);
+  }
+
+  free(ht->storage);
+
+  }
+  free(ht);  
 }
+
 
 /*
   Fill this in.
@@ -138,7 +263,21 @@ void destroy_hash_table(HashTable *ht)
  */
 HashTable *hash_table_resize(HashTable *ht)
 {
-  HashTable *new_ht;
+  
+  HashTable *new_ht = create_hash_table(2 * ht->capacity);
+  printf("New Capacity %d", new_ht->capacity);
+  int i = 0;
+  while (ht->storage[i] != NULL) {
+   
+    LinkedPair *stored_pair = ht->storage[i];
+    printf("\nInserting %s - %s", stored_pair->key, stored_pair->value);
+    hash_table_insert(new_ht, stored_pair->key, stored_pair->value);
+  
+    i++;
+   // }
+  }
+  free(ht->storage);
+  free(ht);
 
   return new_ht;
 }
